@@ -22,12 +22,12 @@ export interface NFTListRequest extends DefaultRequest {
     languageCode: string;
 }
 
-export interface Root {
+export interface NFTListResponse {
     code: number
-    data: Data
+    data: ListData
 }
 
-export interface Data {
+export interface ListData {
     firstID: number
     totalCount: number
     more: number
@@ -54,4 +54,52 @@ export interface List {
 export interface Stat {
     statName: string
     statValue: number
+}
+
+export interface CharacterSpiritRequest extends DefaultRequest {
+    transportID: number;
+    languageCode: string;
+}
+
+export interface CharacterSpiritResponse {
+    code: number;
+    data: SpiritData;
+}
+
+export interface SpiritData {
+    equip: { [key: string]: { [key: string]: Inven } };
+    inven: Inven[];
+}
+
+export interface Inven {
+    transcend: number;
+    grade: number;
+    petName: string;
+    petOrigin: PetOrigin;
+    iconPath: string;
+}
+
+export enum PetOrigin {
+    EarthSpirit = "Earth Spirit",
+    FireSpirit = "Fire Spirit",
+    ForestSpirit = "Forest Spirit",
+    LightSpirit = "Light Spirit",
+    WaterSpirit = "Water Spirit",
+    WindSpirit = "Wind Spirit",
+}
+
+export interface CharacterSkillsRequest extends DefaultRequest {
+    transportID: number;
+    class: number;
+    languageCode: string;
+}
+
+export interface CharacterSkillResponse {
+    code: number;
+    data: Datum[];
+}
+
+export interface Datum {
+    skillLevel: string;
+    skillName:  string;
 }
