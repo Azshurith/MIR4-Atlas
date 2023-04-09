@@ -1,7 +1,7 @@
 {
-  "name": "4-music-player-ytdl",
+  "name": "mir4-atlas",
   "version": "1.0.0",
-  "description": "Example of music bot with discordx",
+  "description": "A Bot that monitors and updates discord channel of its changes.",
   "main": "build/main.js",
   "type": "module",
   "scripts": {
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/samarmeena/discord-music-bot.git"
+    "url": "git+https://github.com/Azshurith/MIR4-Atlas.git"
   },
   "keywords": [
     "discordx",
@@ -23,17 +23,18 @@
     "discord",
     "typescript"
   ],
-  "author": "Vijay Meena <indianoceanroleplay@gmail.com> [https://github.com/samarmeena]",
+  "author": "Devitrax [https://github.com/Azshurith]",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/samarmeena/discord-music-bot/issues"
+    "url": "https://github.com/Azshurith/MIR4-Atlas/issues"
   },
-  "homepage": "https://github.com/samarmeena/discord-music-bot#readme",
+  "homepage": "https://github.com/Azshurith/MIR4-Atlas/#readme",
   "dependencies": {
     "@discordx/importer": "^1.1.10",
     "@discordx/plugin-ytdl-player": "^1.0.0",
     "discord.js": "^14.7.1",
-    "discordx": "^11.7.0"
+    "discordx": "^11.7.0",
+    "dotenv": "^16.0.3"
   },
   "devDependencies": {
     "@types/node": "^18.13.0",
