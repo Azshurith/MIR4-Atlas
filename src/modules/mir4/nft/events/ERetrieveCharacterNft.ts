@@ -25,7 +25,7 @@ export abstract class ERetrieveCharacterNft implements IOnReadyCron {
     onReady([member]: ArgsOf<"ready">, client: Client): void {
         try {
             CLogger.info(`[${import.meta.url}] Start > Retrieving Character NFT`,);
-            new CRetrieveCharacterNft().fetch({
+            new CRetrieveCharacterNft(client).fetch({
                 listType: 'sale',
                 class: 0,
                 levMin: 0,
