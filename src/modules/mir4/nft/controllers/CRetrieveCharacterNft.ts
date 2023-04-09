@@ -1,14 +1,15 @@
 import { APIController } from "../../../core/interface/controllers/APIController";
 import { NFTListRequest, NFTListResponse, List, CharacterSpiritRequest, CharacterSpiritResponse, Inven, CharacterSkillsRequest, CharacterSkillResponse, Datum } from "../interface/IRetrieveCharacterNft";
 import CLogger from "../../../core/interface/utilities/logger/controllers/CLogger.js";
+import HTextChat from "../../../core/helpers/HTextChat.js";
+import { Embed, EmbedBuilder } from "discord.js";
+import { Client } from "discordx";
 import axios, { AxiosResponse } from "axios";
 import queryString from 'query-string';
 import * as path from 'path';
 import fsExtraPkg from 'fs-extra';
 const { ensureDir, outputJson } = fsExtraPkg;
 import lodashPkg from 'lodash';
-import { Embed, EmbedBuilder } from "discord.js";
-import { Client } from "discordx";
 const { isEqual } = lodashPkg;
 
 /**
@@ -91,39 +92,31 @@ export default class CRetrieveCharacterNft implements APIController {
                 if (!isEqual(playerModifiedNft, playerNft)) {
                     await this.saveDataToFile(filePath, playerModifiedNft);
 
-                    /***
-                     * TEST LAYOUT ONLY
-                     */
-                    const guild = this._client.guilds.cache.find(guild => guild.name === "MIR4 Atlas");
-                    if (guild) {
-                        const channel = guild.channels.cache.find(channel => channel.name === '【💬】lobby');
-                        if (channel && channel.isTextBased()) {
-                            channel.send({
-                                embeds: [new EmbedBuilder()
-                                    .setTitle(`[NEW] ${nft.characterName}`)
-                                    .setDescription(`A new level ${nft.lv} ${nft.class} is posted in the NFT Page, for a price of ${nft.price} WEMIX. Click Here to open the NFT page.`)
-                                    .setImage(`https://file.mir4global.com/xdraco-thumb/card-nft/arbalist-grade5.webp`)
-                                    .addFields({
-                                        name: `Name`,
-                                        value: "```" + nft.characterName + "```",
-                                        inline: true
-                                    }).addFields({
-                                        name: `Level`,
-                                        value: "```" + nft.lv + "```",
-                                        inline: true
-                                    }).addFields({
-                                        name: `Power Score`,
-                                        value: "```" + nft.powerScore + "```",
-                                        inline: true
-                                    })
-                                ]
-                            });
-                        } else {
-                            console.log(`Could not find #general channel in MIR4 Atlas`);
-                        }
-                    } else {
-                        console.log(`Could not find server with name MIR4 Atlas`);
+                    const channel = HTextChat.getSpecificServerTextChannelByName(this._client, "MIR4 Atlas", "【💬】lobby")
+                    if (!channel) {
+                        CLogger.error(`[${import.meta.url}] API Error > Channel does not exist: 【💬】lobbyA`);
+                        return;
                     }
+                    channel.send({
+                        embeds: [new EmbedBuilder()
+                            .setTitle(`[NEW] ${nft.characterName}`)
+                            .setDescription(`A new level ${nft.lv} ${nft.class} is posted in the NFT Page, for a price of ${nft.price} WEMIX. Click Here to open the NFT page.`)
+                            .setImage(`https://file.mir4global.com/xdraco-thumb/card-nft/arbalist-grade5.webp`)
+                            .addFields({
+                                name: `Name`,
+                                value: "```" + nft.characterName + "```",
+                                inline: true
+                            }).addFields({
+                                name: `Level`,
+                                value: "```" + nft.lv + "```",
+                                inline: true
+                            }).addFields({
+                                name: `Power Score`,
+                                value: "```" + nft.powerScore + "```",
+                                inline: true
+                            })
+                        ]
+                    });
                 }
             }));
         } catch (error) {
