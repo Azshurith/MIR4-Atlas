@@ -1,16 +1,14 @@
 import { APIController } from "../../../core/interface/controllers/APIController";
-import { NFTListRequest, NFTListResponse, List, CharacterSpiritRequest, CharacterSpiritResponse, Inven, CharacterSkillsRequest, CharacterSkillResponse, Datum } from "../interface/IRetrieveCharacterNft";
+import { Client } from "discordx";
+import { Colors, EmbedBuilder } from "discord.js";
+import { NFTListRequest, NFTListResponse, List, CharacterSpiritRequest, CharacterSpiritResponse, Inven, CharacterSkillsRequest, CharacterSkillResponse, Datum, Nft } from "../interface/IRetrieveCharacterNft";
 import CLogger from "../../../core/interface/utilities/logger/controllers/CLogger.js";
 import HTextChat from "../../../core/helpers/HTextChat.js";
-import { Embed, EmbedBuilder } from "discord.js";
-import { Client } from "discordx";
+import HNFTData from "../helpers/HNFTData.js";
 import axios, { AxiosResponse } from "axios";
 import queryString from 'query-string';
 import * as path from 'path';
-import fsExtraPkg from 'fs-extra';
-const { ensureDir, outputJson } = fsExtraPkg;
-import lodashPkg from 'lodash';
-const { isEqual } = lodashPkg;
+import * as fs from 'fs';
 
 /**
  * A class representing the MIR4 NFT retrieve controller.
@@ -45,11 +43,55 @@ export default class CRetrieveCharacterNft implements APIController {
             const listResponse: AxiosResponse<NFTListResponse, any> = await axios.get<NFTListResponse>(listUrl);
             const totalPages: number = Math.ceil(listResponse.data.data.totalCount / 20);
 
-            for (let i = 1; i <= totalPages; i++) {
-                CLogger.info(`[${import.meta.url}] Retrieving MIR4 NFT Characters: ${i} of ${totalPages}.`);
-                request.page = i;
-                await this.fetchNft(request);
+            const filePath: string = `${process.cwd()}/src/modules/mir4/nft/resources/data/users/nfts-${request.languageCode}.json`;
+            const directoryPath: string = path.dirname(filePath);
+
+            if (!fs.existsSync(directoryPath)) {
+                fs.mkdirSync(directoryPath, { recursive: true });
             }
+
+            if (!fs.existsSync(filePath)) {
+                fs.writeFileSync(filePath, '[]');
+            }
+
+            const file: string = fs.readFileSync(filePath, 'utf-8')
+            const oldNft: List[] = JSON.parse(file)
+            let newNft: List[] = [];
+
+            for (let i = 1; i <= totalPages; i++) {
+                CLogger.info(`[${import.meta.url}] Retrieving MIR4 NFT Characters: ${i} of ${totalPages}.`)
+
+                request.page = i;
+                newNft = newNft.concat(
+                    await this.fetchNft(request)
+                )
+            }
+
+            const removedNft: List[] = oldNft.filter((nft: List) => !newNft.some((newNft: List) => newNft.transportID === nft.transportID))
+            const addedNft: List[] = newNft.filter((newNft: List) => !oldNft.some((nft: List) => newNft.transportID === nft.transportID))
+
+            if (removedNft.length > 0) {
+                CLogger.info(`[${import.meta.url}] Removing ${removedNft.length} NFT items from (${filePath}).`)
+                removedNft.forEach((nft: List) => {
+                    const index: number = oldNft.findIndex((item: List) => item.transportID === nft.transportID)
+                    oldNft.splice(index, 1)
+                    this.notify(nft, "Sold")
+                });
+            }
+
+            if (addedNft.length > 0) {
+                CLogger.info(`[${import.meta.url}] Adding ${addedNft.length} NFT items to (${filePath}).`)
+                addedNft.forEach((nft: List) => {
+                    oldNft.push(nft)
+                    this.notify(nft, "Sale")
+                });
+            }
+
+            if (removedNft.length > 0 || addedNft.length > 0) {
+                CLogger.info(`[${import.meta.url}] Updating nft list (${filePath}).`);
+                fs.writeFileSync(filePath, JSON.stringify(oldNft))
+            }
+
         } catch (error) {
             CLogger.error(`[${import.meta.url}] API Error > NFT List Request: (${error})`);
         }
@@ -59,170 +101,101 @@ export default class CRetrieveCharacterNft implements APIController {
      * Fetches the NFT data and corresponding spirit data for the given request.
      * 
      * @param {NFTListRequest} request - The NFTListRequest object containing the request parameters. 
-     * @returns {Promise<void>} - Returns a promise that resolves with void.
+     * @returns {Promise<List[]>} - Returns a promise that resolves with void.
      */
-    async fetchNft(request: NFTListRequest): Promise<void> {
-        try {
-            if (!process.env.MIR4_CHARACTER_NFT_URL) {
-                CLogger.error(`[${import.meta.url}] The MIR4_CHARACTER_NFT_URL environment variable is not set.`);
-                return;
-            }
+    async fetchNft(request: NFTListRequest): Promise<List[]> {
 
+        const listNfts: List[] = [];
+
+        try {
             const listUrl: string = `${process.env.MIR4_CHARACTER_NFT_URL}?${queryString.stringify(request)}`;
             const listResponse: AxiosResponse<NFTListResponse, any> = await axios.get<NFTListResponse>(listUrl)
 
             await Promise.all(listResponse.data.data.lists.map(async (nft: List) => {
                 CLogger.info(`[${import.meta.url}] Retrieving MIR4 NFT Data: ${nft.characterName}`);
+                listNfts.push(nft)
 
-                const filePath = `${process.cwd()}/src/modules/mir4/nft/resources/data/users/${nft.nftID}-${request.languageCode}.json`;
-                const playerNft = await this.saveDataToFile<List[]>(filePath, []);
-                const playerModifiedNft = [nft];
+                // await this.fetchSpirit({
+                //     transportID: nft.transportID,
+                //     languageCode: request.languageCode
+                // }, nft);
 
-                await this.fetchSpirit({
-                    transportID: nft.transportID,
-                    languageCode: request.languageCode
-                }, nft);
+                // await this.fetchSkills({
+                //     transportID: nft.transportID,
+                //     class: nft.class,
+                //     languageCode: request.languageCode
+                // }, nft);
 
-                await this.fetchSkills({
-                    transportID: nft.transportID,
-                    class: nft.class,
-                    languageCode: request.languageCode
-                }, nft);
-
-                if (!isEqual(playerModifiedNft, playerNft)) {
-                    await this.saveDataToFile(filePath, playerModifiedNft);
-
-                    const channel = HTextChat.getSpecificServerTextChannelByName(this._client, "MIR4 Atlas", "【💬】lobby")
-                    if (!channel) {
-                        CLogger.error(`[${import.meta.url}] API Error > Channel does not exist: 【💬】lobbyA`);
-                        return;
-                    }
-                    channel.send({
-                        embeds: [new EmbedBuilder()
-                            .setTitle(`[NEW] ${nft.characterName}`)
-                            .setDescription(`A new level ${nft.lv} ${nft.class} is posted in the NFT Page, for a price of ${nft.price} WEMIX. Click Here to open the NFT page.`)
-                            .setImage(`https://file.mir4global.com/xdraco-thumb/card-nft/arbalist-grade5.webp`)
-                            .addFields({
-                                name: `Name`,
-                                value: "```" + nft.characterName + "```",
-                                inline: true
-                            }).addFields({
-                                name: `Level`,
-                                value: "```" + nft.lv + "```",
-                                inline: true
-                            }).addFields({
-                                name: `Power Score`,
-                                value: "```" + nft.powerScore + "```",
-                                inline: true
-                            })
-                        ]
-                    });
-                }
             }));
         } catch (error) {
             CLogger.error(`[${import.meta.url}] API Error > NFT List Request: (${error})`);
         }
+
+        return listNfts;
     }
 
     /**
-     * Fetches the spirit data for a given NFT.
+     * Sends a notification message to the specified text channel containing the details of the updated NFT list.
      * 
-     * @param {CharacterSpiritRequest} request The request containing the transportID and languageCode for the spirit data to be fetched.
-     * @param {List} nft The NFT for which the spirit data is to be fetched.
-     * @returns {Promise<void>} - Returns a promise that resolves with void.
+     * @param {List} nft - The NFT list to be notified about.
+     * @param {string} mode - The mode in which the NFT list is being updated (e.g. added or removed).
+     * @returns {void}
      */
-    async fetchSpirit(request: CharacterSpiritRequest, nft: List): Promise<void> {
-        try {
-            CLogger.info(`[${import.meta.url}] Retrieving MIR4 Spirit Data: ${nft.characterName}`);
+    notify(nft: List, mode: string): void {
+        const channel = HTextChat.getSpecificServerTextChannelByName(this._client, "MIR4 Atlas", "【💬】lobby")
 
-            if (!process.env.MIR4_CHARACTER_SPIRIT_URL) {
-                CLogger.error(`[${import.meta.url}] The MIR4_CHARACTER_SPIRIT_URL environment variable is not set.`);
-                return;
-            }
-
-            const spiritUrl = `${process.env.MIR4_CHARACTER_SPIRIT_URL}?${queryString.stringify(request)}`;
-            const spiritResponse: AxiosResponse<CharacterSpiritResponse, any> = await axios.get<CharacterSpiritResponse>(spiritUrl);
-
-            // Save to Library and Player
-            const libraryFilePath = `${process.cwd()}/src/modules/mir4/nft/resources/data/spirits/Spirits-${request.languageCode}.json`;
-            const playerFilePath = `${process.cwd()}/src/modules/mir4/nft/resources/data/users/spirits/${nft.nftID}-${request.languageCode}.json`;
-
-            const librarySpirits = await this.saveDataToFile<Inven[]>(libraryFilePath, []);
-            const playerSpirits = await this.saveDataToFile<Inven[]>(playerFilePath, []);
-
-            const newSpirits = new Set([...spiritResponse.data.data.inven]);
-            const libraryModifiedSpirits = [...newSpirits];
-            const playerModifiedSpirits = [...spiritResponse.data.data.inven];
-
-            if (!isEqual(libraryModifiedSpirits, librarySpirits)) {
-                await this.saveDataToFile(libraryFilePath, libraryModifiedSpirits);
-            }
-
-            if (!isEqual(playerModifiedSpirits, playerSpirits)) {
-                await this.saveDataToFile(playerFilePath, playerModifiedSpirits);
-            }
-        } catch (error) {
-            CLogger.error(`[${import.meta.url}] API Error > Spirit Fetch Request: (${error})`);
+        if (!channel) {
+            CLogger.error(`[${import.meta.url}] Channel does not exist.`);
+            return;
         }
-    }
 
-    /**
-     * Fetches the skills data for a given NFT.
-     * 
-     * @param {CharacterSkillsRequest} request The request containing the transportID and languageCode for the skill data to be fetched.
-     * @param {List} nft The NFT for which the skill data is to be fetched.
-     * @returns {Promise<void>} - Returns a promise that resolves with void.
-     */
-    async fetchSkills(request: CharacterSkillsRequest, nft: List): Promise<void> {
-        try {
-            CLogger.info(`[${import.meta.url}] Retrieving MIR4 Skill Data: ${nft.characterName}`);
+        if (!process.env.MIR4_CHARACTER_NFT_PROFILE_URL) {
+            CLogger.error(`[${import.meta.url}] The MIR4_CHARACTER_NFT_PROFILE_URL environment variable is not set.`);
+            return;
+        }
 
-            if (!process.env.MIR4_CHARACTER_SKILL_URL) {
-                CLogger.error(`[${import.meta.url}] The MIR4_CHARACTER_SKILL_URL environment variable is not set.`);
-                return;
-            }
-
-            const skillUrl = `${process.env.MIR4_CHARACTER_SKILL_URL}?${queryString.stringify(request)}`;
-            const skillResponse: AxiosResponse<CharacterSkillResponse, any> = await axios.get<CharacterSkillResponse>(skillUrl);
-
-            // Save to Library and Player
-            const libraryFilePath = `${process.cwd()}/src/modules/mir4/nft/resources/data/skills/${nft.class}-${request.languageCode}.json`;
-            const playerFilePath = `${process.cwd()}/src/modules/mir4/nft/resources/data/users/skills/${nft.nftID}-${request.languageCode}.json`;
-
-            const librarySkills = await this.saveDataToFile<Inven[]>(libraryFilePath, []);
-            const playerSkills = await this.saveDataToFile<Inven[]>(playerFilePath, []);
-
-            const newSkills = new Set([...skillResponse.data.data]);
-            const libraryModifiedSkills = [...newSkills];
-            const playerModifiedSkills = [...skillResponse.data.data];
-
-            libraryModifiedSkills.forEach(librarySkill => {
-                librarySkill.skillLevel = "Library Data";
+        const embed: EmbedBuilder = new EmbedBuilder()
+            .setTitle(`[${mode}] NFT List is updated`)
+            .setDescription(`**From your story, to our legacyFrom your story, to our legacy**. Character NFT is an innovation that takes game asset ownership to the next level by tokenizing your unique character, storing unique character data on the WEMIX blockchain.`)
+            .setColor(Colors.Green)
+            .setURL(`${process.env.MIR4_CHARACTER_NFT_PROFILE_URL}${nft.seq}`)
+            .setThumbnail("https://file.mir4global.com/xdraco/img/desktop/subnav/logo-nft.webp")
+            .setImage("https://file.mir4global.com/xdraco-thumb/card-nft/arbalist-grade4.webp")
+            .setFooter({
+                text: `# ${nft.seq}`,
+                iconURL: "https://coinalpha.app/images/coin/1_20211022025215.png",
+            })
+            .addFields({
+                name: `Name`,
+                value: "```" + nft.characterName + "```",
+                inline: true
+            }, {
+                name: `Level`,
+                value: "```" + nft.lv + "```",
+                inline: true
+            }, {
+                name: `Class`,
+                value: "```" + HNFTData.getClassNameById(nft.class) + "```",
+                inline: true
+            }, {
+                name: `Power Score`,
+                value: "```" + nft.powerScore + "```",
+                inline: true
+            }, {
+                name: `Mirage Score`,
+                value: "```" + nft.MirageScore + "```",
+                inline: true
+            }, {
+                name: `Price`,
+                value: "```" + nft.price + "```",
+                inline: true
             })
 
-            if (!isEqual(libraryModifiedSkills, librarySkills)) {
-                await this.saveDataToFile(libraryFilePath, libraryModifiedSkills);
-            }
-
-            if (!isEqual(playerModifiedSkills, playerSkills)) {
-                await this.saveDataToFile(playerFilePath, playerModifiedSkills);
-            }
-        } catch (error) {
-            CLogger.error(`[${import.meta.url}] API Error > Skills Fetch Request: (${error})`);
-        }
-    }
-
-    /**
-     * Writes an array of data to a JSON file at the specified file path.
-     * 
-     * @template T
-     * @param {string} filePath - The file path to save the data to.
-     * @param {T[]} data - The array of data to be saved to the file.
-     * @returns {Promise<void>} - A promise that resolves with undefined once the data is saved to the file.
-     */
-    async saveDataToFile<T>(filePath: string, data: T[]): Promise<void> {
-        await ensureDir(path.dirname(filePath));
-        return await outputJson(filePath, data, { spaces: 2 });
+        channel.send({
+            embeds: [
+                embed
+            ]
+        })
     }
 
 }

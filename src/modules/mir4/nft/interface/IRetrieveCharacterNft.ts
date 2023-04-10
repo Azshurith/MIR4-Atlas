@@ -103,3 +103,9 @@ export interface Datum {
     skillLevel: string;
     skillName:  string;
 }
+
+export interface Nft {
+    transportID: number
+    nftID: string
+    characterName: string
+}
