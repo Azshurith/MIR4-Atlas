@@ -1,7 +1,7 @@
 import { APIController } from "../../../core/interface/controllers/APIController";
 import { Client } from "discordx";
 import { AttachmentBuilder, Colors, EmbedBuilder } from "discord.js";
-import { NFTListRequest, NFTListResponse, List, CharacterSpiritRequest, CharacterSpiritResponse, Inven, CharacterSkillsRequest, CharacterSkillResponse, Datum, Nft } from "../interface/IRetrieveCharacterNft";
+import { NFTListRequest, NFTListResponse, List } from "../interface/IRetrieveCharacterNft";
 import CLogger from "../../../core/interface/utilities/logger/controllers/CLogger.js";
 import HTextChat from "../../../core/helpers/HTextChat.js";
 import HNFTData from "../helpers/HNFTData.js";
@@ -163,7 +163,6 @@ export default class CRetrieveCharacterNft implements APIController {
             .setURL(`${process.env.MIR4_CHARACTER_NFT_PROFILE_URL}${nft.seq}`)
             .setThumbnail("https://file.mir4global.com/xdraco/img/desktop/subnav/logo-nft.webp")
             .setImage('attachment://profile-image.png')
-            // .setImage(`https://file.mir4global.com/xdraco/img/common/nft-detail/nft-detail-${HNFTData.getClassNameById(nft.class).toLocaleLowerCase()}${Math.floor(Math.random() * 4) + 2}.webp`)
             .setFooter({
                 text: `# ${nft.seq}`,
                 iconURL: "https://coinalpha.app/images/coin/1_20211022025215.png",

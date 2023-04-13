@@ -1,5 +1,5 @@
 import { Client } from "discordx";
-import { ChannelType, TextChannel } from "discord.js";
+import { ChannelType, Guild, TextChannel } from "discord.js";
 import CLogger from "../interface/utilities/logger/controllers/CLogger.js";
 
 /**
@@ -22,13 +22,13 @@ export default class HTextChat {
      */
     static getSpecificServerTextChannelByName(client: Client, serverName: string, channelName: string): TextChannel | null | undefined {
         try {
-            const guild = client.guilds.cache.find((guild) => guild.name === serverName);
+            const guild: Guild | undefined = client.guilds.cache.find((guild) => guild.name === serverName);
             if (!guild) {
                 CLogger.error(`[${import.meta.url}] Request Error > Server not found: (${serverName})`);
                 return null;
             }
 
-            const channel = guild.channels.cache.find((channel) => channel.name === channelName) as TextChannel;
+            const channel: TextChannel = guild.channels.cache.find((channel) => channel.name === channelName) as TextChannel;
             if (!channel) {
                 CLogger.error(`[${import.meta.url}] Request Error > Channel not found: (${channelName})`);
                 return null;

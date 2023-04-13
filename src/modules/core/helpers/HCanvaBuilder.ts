@@ -43,7 +43,7 @@ export default class HCanvaBuilder {
         }
 
         return new Promise((resolve) => {
-            const image = new Image();
+            const image: HTMLImageElement = new Image();
             image.crossOrigin = "anonymous";
             image.onload = () => {
                 images[image.src] = image;
@@ -92,18 +92,18 @@ export default class HCanvaBuilder {
                 context2d[key] = value
         })
 
-        let innerLength = progressBar.lineWidth - progressBar.cornerRadius * 2
+        let innerLength: number = progressBar.lineWidth - progressBar.cornerRadius * 2
         if (innerLength < 0) innerLength = 0
 
-        let actualCornerRadius = progressBar.cornerRadius
+        let actualCornerRadius: number = progressBar.cornerRadius
         if (progressBar.lineWidth < progressBar.cornerRadius * 2) {
             actualCornerRadius = progressBar.lineWidth / 2
         }
 
         context.lineWidth = actualCornerRadius
 
-        const leftX = progressBar.x + actualCornerRadius / 2
-        const rightX = leftX + innerLength
+        const leftX: number = progressBar.x + actualCornerRadius / 2
+        const rightX: number = leftX + innerLength
 
         context.beginPath()
         context.moveTo(leftX, progressBar.y)
@@ -142,7 +142,7 @@ export default class HCanvaBuilder {
      * @returns {string} - The font size and font family to be used for the text.
      */
     static resizeText(context: canvas.CanvasRenderingContext2D, canvas: canvas.Canvas, text: string): string {
-        let fontSize = 50
+        let fontSize: number = 50
 
         do {
             context.font = `${fontSize -= 5}px "Heavitas"`
