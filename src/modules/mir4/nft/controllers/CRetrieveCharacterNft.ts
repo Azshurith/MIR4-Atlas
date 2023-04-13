@@ -1,6 +1,6 @@
 import { APIController } from "../../../core/interface/controllers/APIController";
 import { Client } from "discordx";
-import { Colors, EmbedBuilder } from "discord.js";
+import { AttachmentBuilder, Colors, EmbedBuilder } from "discord.js";
 import { NFTListRequest, NFTListResponse, List, CharacterSpiritRequest, CharacterSpiritResponse, Inven, CharacterSkillsRequest, CharacterSkillResponse, Datum, Nft } from "../interface/IRetrieveCharacterNft";
 import CLogger from "../../../core/interface/utilities/logger/controllers/CLogger.js";
 import HTextChat from "../../../core/helpers/HTextChat.js";
@@ -9,6 +9,7 @@ import axios, { AxiosResponse } from "axios";
 import queryString from 'query-string';
 import * as path from 'path';
 import * as fs from 'fs';
+import canvas from "canvas";
 
 /**
  * A class representing the MIR4 NFT retrieve controller.
@@ -141,7 +142,7 @@ export default class CRetrieveCharacterNft implements APIController {
      * @param {string} mode - The mode in which the NFT list is being updated (e.g. added or removed).
      * @returns {void}
      */
-    notify(nft: List, mode: string): void {
+    async notify(nft: List, mode: string): Promise<void> {
         const channel = HTextChat.getSpecificServerTextChannelByName(this._client, "MIR4 Atlas", "【💬】lobby")
 
         if (!channel) {
@@ -154,13 +155,15 @@ export default class CRetrieveCharacterNft implements APIController {
             return;
         }
 
+        const canvas: canvas.Canvas = await HNFTData.getCharacterCanva(nft);
         const embed: EmbedBuilder = new EmbedBuilder()
             .setTitle(`[${mode}] NFT List is updated`)
             .setDescription(`**From your story, to our legacyFrom your story, to our legacy**. Character NFT is an innovation that takes game asset ownership to the next level by tokenizing your unique character, storing unique character data on the WEMIX blockchain.`)
             .setColor(Colors.Green)
             .setURL(`${process.env.MIR4_CHARACTER_NFT_PROFILE_URL}${nft.seq}`)
             .setThumbnail("https://file.mir4global.com/xdraco/img/desktop/subnav/logo-nft.webp")
-            .setImage("https://file.mir4global.com/xdraco-thumb/card-nft/arbalist-grade4.webp")
+            .setImage('attachment://profile-image.png')
+            // .setImage(`https://file.mir4global.com/xdraco/img/common/nft-detail/nft-detail-${HNFTData.getClassNameById(nft.class).toLocaleLowerCase()}${Math.floor(Math.random() * 4) + 2}.webp`)
             .setFooter({
                 text: `# ${nft.seq}`,
                 iconURL: "https://coinalpha.app/images/coin/1_20211022025215.png",
@@ -194,6 +197,9 @@ export default class CRetrieveCharacterNft implements APIController {
         channel.send({
             embeds: [
                 embed
+            ],
+            files: [
+                new AttachmentBuilder(canvas.toBuffer(), { name: 'profile-image.png' })
             ]
         })
     }
