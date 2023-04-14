@@ -1,6 +1,11 @@
-import HCanvaBuilder from "../../../core/helpers/HCanvaBuilder"
+import HCanvaBuilder from "../../../core/helpers/HCanvaBuilder.js"
 import canvas, { Canvas as CanvasB } from "canvas";
-import { List } from "../interface/IRetrieveCharacterNft";
+const { loadImage } = canvas;
+import { CharacterSummaryRequest, CharacterSummaryResponse, List } from "../interface/IRetrieveCharacterNft";
+import CLogger from "../../../core/interface/utilities/logger/controllers/CLogger.js";
+import fs from 'fs';
+import queryString from 'query-string';
+import axios, { AxiosResponse } from 'axios';
 
 /**
  * A class representing a NFT Data Helper
@@ -33,9 +38,13 @@ export default class HNFTData {
      * Returns a canvas object with all the character items drawn on it
      * 
      * @param {List} nft - a list of character items
+     * @param {CharacterSummaryRequest} request - the request object containing character summary parameters
      * @return {Promise<canvas.Canvas>} - the canvas object with character items drawn on it
      */
-    static async getCharacterCanva(nft: List): Promise<canvas.Canvas> {
+    static async getCharacterCanva(nft: List, request: CharacterSummaryRequest): Promise<canvas.Canvas> {
+        const summaryUrl: string = `${process.env.MIR4_CHARACTER_SUMMARY_URL}?${queryString.stringify(request)}`;
+        const summaryResponse: AxiosResponse<CharacterSummaryResponse, any> = await axios.get<CharacterSummaryResponse>(summaryUrl);
+
         const canvas: canvas.Canvas = HCanvaBuilder.createCanva({
             height: 800,
             width: 800,
@@ -44,84 +53,20 @@ export default class HNFTData {
 
         const context: canvas.CanvasRenderingContext2D = canvas.getContext('2d');
 
-        const avatarPromise = this.loadAvatar(context);
-        const pathPromise = this.loadPath(context);
-        const item1Promise = this.loadItem(
-            context,
-            4,
-            1,
-            "https://file.mir4global.com/xdraco-thumb/Content/UI/Atlas_N_Resource/Icon/Item/Equip/Item_Equip_Pca_01/Icon_WPN_PCA_10.png"
-        );
-        const item2Promise = this.loadItem(
-            context,
-            4,
-            2,
-            "https://file.mir4global.com/xdraco-thumb/Content/UI/Atlas_N_Resource/Icon/Item/Equip/Item_Equip_Pca_01/PCA_SubWeapon_07.png"
-        );
-        const item3Promise = this.loadItem(
-            context,
-            4,
-            3,
-            "https://file.mir4global.com/xdraco-thumb/Content/UI/Atlas_N_Resource/Icon/Item/Equip/Item_Equip_Pca_01/PCA_Armor_07_Top.png"
-        );
-        const item4Promise = this.loadItem(
-            context,
-            4,
-            4,
-            "https://file.mir4global.com/xdraco-thumb/Content/UI/Atlas_N_Resource/Icon/Item/Equip/Item_Equip_Pca_01/PCA_Armor_07_Pants.png"
-        );
-        const item5Promise = this.loadItem(
-            context,
-            4,
-            5,
-            "https://file.mir4global.com/xdraco-thumb/Content/UI/Atlas_N_Resource/Icon/Item/Equip/Item_Equip_Pca_01/PCA_Armor_07_Gloves.png"
-        );
-        const item6Promise = this.loadItem(
-            context,
-            4,
-            6,
-            "https://file.mir4global.com/xdraco-thumb/Content/UI/Atlas_N_Resource/Icon/Item/Equip/Item_Equip_Pca_01/PCA_Armor_07_Shose.png"
-        );
-        const item7Promise = this.loadItem(
-            context,
-            4,
-            7,
-            "https://file.mir4global.com/xdraco-thumb/Content/UI/Atlas_N_Resource/Icon/Item/Equip/Item_Equip_Accessory_01/Pcc_Accessory_Necklace_004.png"
-        );
-        const item8Promise = this.loadItem(
-            context,
-            4,
-            8,
-            "https://file.mir4global.com/xdraco-thumb/Content/UI/Atlas_N_Resource/Icon/Item/Equip/Item_Equip_Accessory_01/Pcc_Accessory_Bracelet_004.png"
-        );
-        const item9Promise = this.loadItem(
-            context,
-            4,
-            9,
-            "https://file.mir4global.com/xdraco-thumb/Content/UI/Atlas_N_Resource/Icon/Item/Equip/Item_Equip_Accessory_01/Pcc_Accessory_Ring_004.png"
-        );
-        const item10Promise = this.loadItem(
-            context,
-            4,
-            10,
-            "https://file.mir4global.com/xdraco-thumb/Content/UI/Atlas_N_Resource/Icon/Item/Equip/Item_Equip_Accessory_01/Pcc_Accessory_EarRing_007.png"
-        );
-
-        await Promise.all([
-            avatarPromise,
-            pathPromise,
-            item1Promise,
-            item2Promise,
-            item3Promise,
-            item4Promise,
-            item5Promise,
-            item6Promise,
-            item7Promise,
-            item8Promise,
-            item9Promise,
-            item10Promise
-        ]);
-
+        await this.loadAvatar(context, nft);
+        await this.loadPath(context);
+        for (let i = 1; i <= 10; i++) {
+            const equipItem = summaryResponse.data.data.equipItem[i];
+            CLogger.error(JSON.stringify(equipItem));
+            await this.loadItem(
+                context,
+                equipItem.grade,
+                i,
+                equipItem.itemPath,
+                equipItem.tier,
+                equipItem.enhance
+            );
+        }
         return canvas;
     }
 
@@ -129,16 +74,14 @@ export default class HNFTData {
      * Loads an avatar image onto the canvas.
      * 
      * @param {CanvasRenderingContext2D} context - The 2D rendering context for the canvas.
+     * @param {List} nft - a list of character items
      * @return {Promise<void>} - A promise that resolves when the image has been loaded onto the canvas.
      */
-    static async loadAvatar(context: canvas.CanvasRenderingContext2D): Promise<void> {
-        await HCanvaBuilder.createImage(context, {
-            src: `https://file.mir4global.com/xdraco/img/common/nft-detail/nft-detail-arbalist5.webp`,
-            dx: 0,
-            dy: 0,
-            dw: 700,
-            dh: 700
-        })
+    static async loadAvatar(context: canvas.CanvasRenderingContext2D, nft: List): Promise<void> {
+        const min: number = 2;
+        const max: number = 5;
+        const randomNum: number = Math.floor(Math.random() * (max - min + 1)) + min;
+        context.drawImage(await loadImage(`${process.cwd()}/src/modules/mir4/nft/resources/images/classes/nft-detail-${this.getClassNameById(nft.class)}${randomNum}.png`), 0, 0, 700, 700);
     }
 
     /**
@@ -148,25 +91,49 @@ export default class HNFTData {
      * @return {Promise<void>} - A promise that resolves when the image has been loaded onto the canvas.
      */
     static async loadPath(context: canvas.CanvasRenderingContext2D): Promise<void> {
-        await HCanvaBuilder.createImage(context, {
-            src: `https://file.mir4global.com/xdraco/img/common/nft-detail/bg-character-equip.webp`,
-            dx: 100,
-            dy: 100,
-            dw: 600,
-            dh: 600
-        })
+        context.drawImage(await loadImage(`${process.cwd()}/src/modules/mir4/nft/resources/images/nft-detail/bg-character-equip.png`), 100, 100, 600, 600);
+    }
+
+    /**
+     * Loads an image asset from a given URL and returns a Promise that resolves to an Image object.
+     *
+     * @param {string} url - The URL of the image asset to load.
+     * @returns {Promise<canvas.Image>} A Promise that resolves to an Image object of the loaded asset.
+     */
+    static async loadAsset(url: string): Promise<canvas.Image> {
+        const directoryPath: string = `${process.cwd()}/src/modules/mir4/nft/resources/images/nft-detail/items/`;
+        const lastSlashIndex = url.lastIndexOf('/');
+        let localPath: string = directoryPath;
+
+        if (lastSlashIndex >= 0) {
+            localPath += url.substring(lastSlashIndex + 1);
+        }
+
+        if (!fs.existsSync(directoryPath)) {
+            fs.mkdirSync(directoryPath, { recursive: true });
+        }
+
+        if (!fs.existsSync(localPath)) {
+            const response: AxiosResponse = await axios.get(url, { responseType: 'arraybuffer' });
+            const imageData = Buffer.from(response.data, 'binary');
+            fs.writeFileSync(localPath, imageData);
+        }
+
+        return await loadImage(localPath);
     }
 
     /**
      * Loads an item image onto the canvas with a specified rarity, item type, and URL.
      * 
      * @param {CanvasRenderingContext2D} context - The canvas rendering context to draw the item image onto.
-     * @param {number} rarity - The rarity of the item.
+     * @param {number} grade - The grade of the item.
      * @param {number} itemType - The type of the item.
      * @param {string} itemUrl - The URL of the item image.
+     * @param {number} tier - The tier of the item.
+     * @param {number} enhance - The enhancement level of the item.
      * @returns {Promise<void>} A Promise that resolves when the item image has been loaded onto the canvas.
      */
-    static async loadItem(context: canvas.CanvasRenderingContext2D, rarity: number, itemType: number, itemUrl: string): Promise<void> {
+    static async loadItem(context: canvas.CanvasRenderingContext2D, grade: number, itemType: number, itemUrl: string, tier: number, enhance: number): Promise<void> {
         const bgPositions = [
             [180, 100],
             [90, 200],
@@ -184,40 +151,35 @@ export default class HNFTData {
         const bgPositionY = bgPositions[itemType - 1][1];
         const size = 145;
 
-        await Promise.all([
-            HCanvaBuilder.createImage(context, {
-                src: `https://file.mir4global.com/xdraco/img/common/nft-detail/sp-item-frame.webp`,
-                sx: 0,
-                sy: 0 + 144 * rarity,
-                sw: size,
-                sh: size,
-                dx: bgPositionX,
-                dy: bgPositionY,
-                dw: 100,
-                dh: 100
-            }),
-            HCanvaBuilder.createImage(context, {
-                src: `https://file.mir4global.com/xdraco/img/common/nft-detail/sp-item-frame.webp`,
-                sx: bgPositionX + 10,
-                sy: bgPositionY + 10,
-                sw: 75,
-                sh: 75,
-                dx: 0,
-                dy: 0,
-                dw: 0,
-                dh: 0
-            })
-        ]);
+        context.drawImage(await loadImage(`${process.cwd()}/src/modules/mir4/nft/resources/images/nft-detail/sp-item-frame.png`), 0, (grade - 1) * 144, size, size, bgPositionX, bgPositionY, 100, 100);
+        context.drawImage(await this.loadAsset(itemUrl), bgPositionX + 10, bgPositionY + 10, 75, 75);
 
-        context.font = "bold 20px Arial";
+        context.font = "bold 30px Arial";
         context.fillStyle = "#FFFFFF";
         context.strokeStyle = "black";
         context.lineWidth = 4;
         context.lineJoin = "miter";
         context.miterLimit = 2;
-        context.strokeText("+1", bgPositionX + 75, bgPositionY + 20);
-        context.fillText("+1", bgPositionX + 75, bgPositionY + 20);
-        context.strokeText("IV", bgPositionX + 5, bgPositionY + 90);
-        context.fillText("IV", bgPositionX + 5, bgPositionY + 90);
+        context.strokeText(`+${enhance}`, bgPositionX + 75, bgPositionY + 20);
+        context.fillText(`+${enhance}`, bgPositionX + 75, bgPositionY + 20);
+        context.strokeText(this.romanize(tier), bgPositionX, bgPositionY + 90);
+        context.fillText(this.romanize(tier), bgPositionX, bgPositionY + 90);
+    }
+
+    /**
+     * Converts a number to a Roman numeral string.
+     * 
+     * @param {number} num - The number to convert.
+     * @returns {string} The Roman numeral string.
+     */
+    static romanize(num: number) {
+        var lookup: any = { M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 }, roman = '', i;
+        for (i in lookup) {
+            while (num >= lookup[i]) {
+                roman += i;
+                num -= lookup[i];
+            }
+        }
+        return roman;
     }
 }

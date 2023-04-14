@@ -76,7 +76,7 @@ export default class CRetrieveCharacterNft implements APIController {
                 removedNft.forEach((nft: List) => {
                     const index: number = oldNft.findIndex((item: List) => item.transportID === nft.transportID)
                     oldNft.splice(index, 1)
-                    this.notify(nft, "Sold")
+                    this.notify(nft, request, "Sold")
                 });
             }
 
@@ -84,7 +84,7 @@ export default class CRetrieveCharacterNft implements APIController {
                 CLogger.info(`[${import.meta.url}] Adding ${addedNft.length} NFT items to (${filePath}).`)
                 addedNft.forEach((nft: List) => {
                     oldNft.push(nft)
-                    this.notify(nft, "Sale")
+                    this.notify(nft, request, "Sale")
                 });
             }
 
@@ -139,12 +139,12 @@ export default class CRetrieveCharacterNft implements APIController {
      * Sends a notification message to the specified text channel containing the details of the updated NFT list.
      * 
      * @param {List} nft - The NFT list to be notified about.
+     * @param {NFTListRequest} request - The request object for fetching NFTs.
      * @param {string} mode - The mode in which the NFT list is being updated (e.g. added or removed).
      * @returns {void}
      */
-    async notify(nft: List, mode: string): Promise<void> {
+    async notify(nft: List, request: NFTListRequest, mode: string): Promise<void> {
         const channel = HTextChat.getSpecificServerTextChannelByName(this._client, "MIR4 Atlas", "【💬】lobby")
-
         if (!channel) {
             CLogger.error(`[${import.meta.url}] Channel does not exist.`);
             return;
@@ -155,13 +155,17 @@ export default class CRetrieveCharacterNft implements APIController {
             return;
         }
 
-        const canvas: canvas.Canvas = await HNFTData.getCharacterCanva(nft);
+        const canvas: canvas.Canvas = await HNFTData.getCharacterCanva(nft, {
+            seq: nft.seq,
+            languageCode: request.languageCode
+        });
+
         const embed: EmbedBuilder = new EmbedBuilder()
             .setTitle(`[${mode}] NFT List is updated`)
             .setDescription(`**From your story, to our legacyFrom your story, to our legacy**. Character NFT is an innovation that takes game asset ownership to the next level by tokenizing your unique character, storing unique character data on the WEMIX blockchain.`)
             .setColor(Colors.Green)
             .setURL(`${process.env.MIR4_CHARACTER_NFT_PROFILE_URL}${nft.seq}`)
-            .setThumbnail("https://file.mir4global.com/xdraco/img/desktop/subnav/logo-nft.webp")
+            // .setThumbnail("https://file.mir4global.com/xdraco/img/desktop/subnav/logo-nft.webp")
             .setImage('attachment://profile-image.png')
             .setFooter({
                 text: `# ${nft.seq}`,
@@ -198,9 +202,10 @@ export default class CRetrieveCharacterNft implements APIController {
                 embed
             ],
             files: [
-                new AttachmentBuilder(canvas.toBuffer(), { name: 'profile-image.png' })
+                new AttachmentBuilder(canvas.toBuffer('image/png'), { name: 'profile-image.png' })
             ]
         })
+        CLogger.error(`[${import.meta.url}] END`);
     }
 
 }

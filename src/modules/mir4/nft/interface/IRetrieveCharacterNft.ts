@@ -101,11 +101,56 @@ export interface CharacterSkillResponse {
 
 export interface Datum {
     skillLevel: string;
-    skillName:  string;
+    skillName: string;
 }
 
 export interface Nft {
     transportID: number
     nftID: string
     characterName: string
+}
+
+export interface CharacterSummaryRequest extends DefaultRequest {
+    seq: number;
+    languageCode: string;
+}
+
+export interface CharacterSummaryResponse {
+    code: number;
+    data: Data;
+}
+
+export interface Data {
+    character: Character;
+    mintedTS: number;
+    sealedTS: number;
+    nftID: string;
+    blockChain: string;
+    price: number;
+    tradeType: number;
+    contractAddress: string;
+    equipItem: { [key: string]: EquipItem };
+}
+
+export interface Character {
+    name: string;
+    worldName: string;
+    transportID: string;
+    class: string;
+    level: string;
+    powerScore: string;
+    MirageScore: number;
+    MiraX: number;
+    Reinforce: number;
+}
+
+export interface EquipItem {
+    itemIdx: string;
+    enhance: number;
+    refineStep: string;
+    grade: number;
+    tier: number;
+    itemType: string;
+    itemName: string;
+    itemPath: string;
 }

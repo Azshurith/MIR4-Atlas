@@ -1,11 +1,9 @@
 import { IArc, ICanvas, IFont, IImage, IProgressBar } from "../interface/helpers/ICanvas";
-import canvas, { Canvas as CanvasB } from "canvas";
+import canvas, { Canvas as CanvasB, Image } from "canvas";
 const { Canvas, loadImage, registerFont } = canvas;
-const images: { [key: string]: HTMLImageElement } = {};
 
 /**
  * A class representing the canvas controller
-
  * 
  * @version 1.0.0
  * @since 04/13/23
@@ -34,23 +32,20 @@ export default class HCanvaBuilder {
      *
      * @param {canvas.CanvasRenderingContext2D} context - The 2D rendering context of the canvas.
      * @param {IImage} image - An object that represents the image.
-     * @returns {Promise<HTMLImageElement>} - A promise that resolves to the created image.
+     * @returns {Promise<void>} - A promise that resolves when the arc is created.
      */
-    static async createImage(context: canvas.CanvasRenderingContext2D, image: IImage): Promise<HTMLImageElement> {
-        if (images[image.src]) {
-            context.drawImage(await loadImage(image.src), image.dx, image.dy, image.dw, image.dh)
-            return images[image.src];
-        }
+    static async createImage(context: canvas.CanvasRenderingContext2D, iImage: IImage): Promise<void> {
+        // context.drawImage(await loadImage(iImage.src), iImage.sx!, iImage.sy!, iImage.sw!, iImage.sh!, iImage.dx, iImage.dy, iImage.dw, iImage.dh);
+        // const classImg: Image = new Image();
+        // classImg.src = iImage.src;
 
-        return new Promise((resolve) => {
-            const image: HTMLImageElement = new Image();
-            image.crossOrigin = "anonymous";
-            image.onload = () => {
-                images[image.src] = image;
-                resolve(image);
-            };
-            image.src = image.src;
-        });
+        // await new Promise<void>((resolve) => {
+        //     classImg.onload = () => {
+        //         context.drawImage(classImg, iImage.sx!, iImage.sy!, iImage.sw!, iImage.sh!, iImage.dx, iImage.dy, iImage.dw, iImage.dh);
+        //         resolve();
+        //     };
+        // });
+        context.drawImage(await loadImage(iImage.src), iImage.sx!, iImage.sy!, iImage.sw!, iImage.sh!, iImage.dx, iImage.dy, iImage.dw, iImage.dh);
     }
 
     /**
