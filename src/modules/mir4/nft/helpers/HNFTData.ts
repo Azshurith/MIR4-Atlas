@@ -136,14 +136,14 @@ export default class HNFTData {
     static async loadItem(context: canvas.CanvasRenderingContext2D, grade: number, itemType: number, itemUrl: string, tier: number, enhance: number): Promise<void> {
         const bgPositions = [
             [180, 100],
-            [90, 200],
+            [400, 630],
+            [530, 580],
+            [630, 470],
             [55, 330],
             [70, 460],
             [150, 560],
             [260, 640],
-            [400, 630],
-            [530, 580],
-            [630, 470],
+            [90, 200],
             [650, 335]
         ];
 
