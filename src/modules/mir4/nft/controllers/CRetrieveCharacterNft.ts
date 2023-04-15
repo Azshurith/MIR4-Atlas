@@ -1,6 +1,6 @@
 import { APIController } from "../../../core/interface/controllers/APIController";
 import { Client } from "discordx";
-import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, Colors, EmbedBuilder, MessageActionRowComponentBuilder } from "discord.js";
+import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, MessageActionRowComponentBuilder } from "discord.js";
 import { NFTListRequest, NFTListResponse, List, CharacterSummaryResponse } from "../interface/IRetrieveCharacterNft";
 import CLogger from "../../../core/interface/utilities/logger/controllers/CLogger.js";
 import HTextChat from "../../../core/helpers/HTextChat.js";
@@ -84,7 +84,7 @@ export default class CRetrieveCharacterNft implements APIController {
                 removedNft.forEach((nft: List) => {
                     const index: number = oldNft.findIndex((item: List) => item.transportID === nft.transportID)
                     oldNft.splice(index, 1)
-                    this.notify(nft, request, "Sold")
+                    this.notify(nft, request)
                 });
             }
 
@@ -92,7 +92,7 @@ export default class CRetrieveCharacterNft implements APIController {
                 CLogger.info(`[${import.meta.url}] Adding ${addedNft.length} NFT items to (${filePath}).`)
                 addedNft.forEach((nft: List) => {
                     oldNft.push(nft)
-                    this.notify(nft, request, "Sale")
+                    this.notify(nft, request)
                 });
             }
 
@@ -148,19 +148,24 @@ export default class CRetrieveCharacterNft implements APIController {
      * 
      * @param {List} nft - The NFT list to be notified about.
      * @param {NFTListRequest} request - The request object for fetching NFTs.
-     * @param {string} mode - The mode in which the NFT list is being updated (e.g. added or removed).
      * @returns {void}
      */
-    async notify(nft: List, request: NFTListRequest, mode: string): Promise<void> {
+    async notify(nft: List, request: NFTListRequest): Promise<void> {
         try {
-            const channel = HTextChat.getSpecificServerTextChannelByName(this._client, "MIR4 Atlas", "【💬】lobby")
-            if (!channel) {
-                CLogger.error(`[${import.meta.url}] Channel does not exist.`);
-                return;
-            }
+            const envValidation: string[] = [
+                "SERVER_NAME", "SERVER_NFT_FORUM_NAME", "SERVER_NFT_FORUM_THREAD_NAME", "SERVER_NFT_FORUM_THREAD_CONTENT"
+            ]
 
-            if (!process.env.MIR4_CHARACTER_NFT_PROFILE_URL) {
-                CLogger.error(`[${import.meta.url}] The MIR4_CHARACTER_NFT_PROFILE_URL environment variable is not set.`);
+            envValidation.forEach((env: string) => {
+                if (!process.env[env]) {
+                    CLogger.error(`[${import.meta.url}] The ${env} environment variable is not set.`);
+                    return;
+                }
+            });
+
+            const thread = await HTextChat.getSpecificServerForumThreadByName(this._client, process.env.SERVER_NAME!, process.env.SERVER_NFT_FORUM_NAME!, process.env.SERVER_NFT_FORUM_THREAD_NAME!, process.env.SERVER_NFT_FORUM_THREAD_CONTENT!)
+            if (!thread) {
+                CLogger.error(`[${import.meta.url}] Thread does not exist.`);
                 return;
             }
 
@@ -171,12 +176,14 @@ export default class CRetrieveCharacterNft implements APIController {
             const summaryUrl: string = `${process.env.MIR4_CHARACTER_SUMMARY_URL}?${queryString.stringify(summaryRequest)}`;
             const summaryResponse: AxiosResponse<CharacterSummaryResponse, any> = await axios.get<CharacterSummaryResponse>(summaryUrl);
             const characterSummary: CharacterSummaryResponse = summaryResponse.data
-            
+
+            const transactionType: any[] = HNFTData.getTransactionType(characterSummary.data.tradeType)
+
             const canvas: canvas.Canvas = await HNFTData.getCharacterCanva(characterSummary);
             const embed: EmbedBuilder = new EmbedBuilder()
-                .setTitle(`[${mode.toUpperCase()}] NFT List is updated`)
+                .setTitle(`[${transactionType[0]}] NFT List is updated`)
                 .setDescription(`**From your story, to our legacy.**\n ${characterSummary.data.character.name} is a Level ${characterSummary.data.character.level} ${HNFTData.getClassNameById(characterSummary.data.character.class)} from the ${characterSummary.data.character.worldName} Server.`)
-                .setColor(mode == "Sale" ? Colors.Green : Colors.Red)
+                .setColor(transactionType[1])
                 .setImage('attachment://profile-image.png')
                 .setFooter({
                     text: `Sealed On: ${new Date(characterSummary.data.sealedTS * 1000)}`,
@@ -184,7 +191,7 @@ export default class CRetrieveCharacterNft implements APIController {
                 })
                 .addFields({
                     name: `Name`,
-                    value: "```" +characterSummary.data.character.name + "```",
+                    value: "```" + characterSummary.data.character.name + "```",
                     inline: true
                 }, {
                     name: `Level`,
@@ -215,7 +222,7 @@ export default class CRetrieveCharacterNft implements APIController {
                     .setURL(`${process.env.MIR4_CHARACTER_NFT_PROFILE_URL}${nft.seq}`)
                 )
 
-            channel.send({
+            thread.send({
                 embeds: [
                     embed
                 ],

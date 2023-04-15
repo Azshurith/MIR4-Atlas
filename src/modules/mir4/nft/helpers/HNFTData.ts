@@ -4,6 +4,7 @@ import CLogger from "../../../core/interface/utilities/logger/controllers/CLogge
 import fs from 'fs';
 import axios, { AxiosResponse } from 'axios';
 import canvas, { Canvas as CanvasB } from "canvas";
+import { Colors } from "discord.js";
 const { loadImage } = canvas;
 
 /**
@@ -30,6 +31,20 @@ export default class HNFTData {
             case "4": return "Arbalist";
             case "5": return "Lancer";
             default: return "Darkist";
+        }
+    }
+
+    /**
+     * Retrieves transaction type
+     *
+     * @param {number} transactionType
+     * @return {any[]} transaction data
+     */
+    static getTransactionType(transactionType: number): any[] {
+        switch (transactionType) {
+            case 1: return ["SALE", Colors.Green];
+            case 2: return ["CANCEL", Colors.Blue];
+            default: return ["SOLD", Colors.Red];
         }
     }
 
