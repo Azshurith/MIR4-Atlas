@@ -9,4 +9,4 @@ yarn.lock
 build
 node_modules
 log
-src/modules/mir4/nft/resources
+src/modules/mir4/nft/resources/data

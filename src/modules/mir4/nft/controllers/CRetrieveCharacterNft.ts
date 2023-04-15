@@ -1,7 +1,7 @@
 import { APIController } from "../../../core/interface/controllers/APIController";
 import { Client } from "discordx";
-import { AttachmentBuilder, Colors, EmbedBuilder } from "discord.js";
-import { NFTListRequest, NFTListResponse, List } from "../interface/IRetrieveCharacterNft";
+import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, Colors, EmbedBuilder, MessageActionRowComponentBuilder } from "discord.js";
+import { NFTListRequest, NFTListResponse, List, CharacterSummaryResponse } from "../interface/IRetrieveCharacterNft";
 import CLogger from "../../../core/interface/utilities/logger/controllers/CLogger.js";
 import HTextChat from "../../../core/helpers/HTextChat.js";
 import HNFTData from "../helpers/HNFTData.js";
@@ -21,8 +21,16 @@ import canvas from "canvas";
  */
 export default class CRetrieveCharacterNft implements APIController {
 
+    /**
+     * @var {Client} client - The client object used to interact with the API.
+     */
     private readonly _client: Client
 
+    /**
+     * Create a new instance of the class.
+     * 
+     * @param {Client} client - The client object used to interact with the API.
+     */
     constructor(client: Client) {
         this._client = client
     }
@@ -144,68 +152,83 @@ export default class CRetrieveCharacterNft implements APIController {
      * @returns {void}
      */
     async notify(nft: List, request: NFTListRequest, mode: string): Promise<void> {
-        const channel = HTextChat.getSpecificServerTextChannelByName(this._client, "MIR4 Atlas", "【💬】lobby")
-        if (!channel) {
-            CLogger.error(`[${import.meta.url}] Channel does not exist.`);
-            return;
-        }
+        try {
+            const channel = HTextChat.getSpecificServerTextChannelByName(this._client, "MIR4 Atlas", "【💬】lobby")
+            if (!channel) {
+                CLogger.error(`[${import.meta.url}] Channel does not exist.`);
+                return;
+            }
 
-        if (!process.env.MIR4_CHARACTER_NFT_PROFILE_URL) {
-            CLogger.error(`[${import.meta.url}] The MIR4_CHARACTER_NFT_PROFILE_URL environment variable is not set.`);
-            return;
-        }
+            if (!process.env.MIR4_CHARACTER_NFT_PROFILE_URL) {
+                CLogger.error(`[${import.meta.url}] The MIR4_CHARACTER_NFT_PROFILE_URL environment variable is not set.`);
+                return;
+            }
 
-        const canvas: canvas.Canvas = await HNFTData.getCharacterCanva(nft, {
-            seq: nft.seq,
-            languageCode: request.languageCode
-        });
+            const summaryRequest: any = {
+                seq: nft.seq,
+                languageCode: request.languageCode
+            }
+            const summaryUrl: string = `${process.env.MIR4_CHARACTER_SUMMARY_URL}?${queryString.stringify(summaryRequest)}`;
+            const summaryResponse: AxiosResponse<CharacterSummaryResponse, any> = await axios.get<CharacterSummaryResponse>(summaryUrl);
+            const characterSummary: CharacterSummaryResponse = summaryResponse.data
+            
+            const canvas: canvas.Canvas = await HNFTData.getCharacterCanva(characterSummary);
+            const embed: EmbedBuilder = new EmbedBuilder()
+                .setTitle(`[${mode.toUpperCase()}] NFT List is updated`)
+                .setDescription(`**From your story, to our legacy.**\n ${characterSummary.data.character.name} is a Level ${characterSummary.data.character.level} ${HNFTData.getClassNameById(characterSummary.data.character.class)} from the ${characterSummary.data.character.worldName} Server.`)
+                .setColor(mode == "Sale" ? Colors.Green : Colors.Red)
+                .setImage('attachment://profile-image.png')
+                .setFooter({
+                    text: `Sealed On: ${new Date(characterSummary.data.sealedTS * 1000)}`,
+                    iconURL: "https://coinalpha.app/images/coin/1_20211022025215.png",
+                })
+                .addFields({
+                    name: `Name`,
+                    value: "```" +characterSummary.data.character.name + "```",
+                    inline: true
+                }, {
+                    name: `Level`,
+                    value: "```" + characterSummary.data.character.level + "```",
+                    inline: true
+                }, {
+                    name: `Class`,
+                    value: "```" + HNFTData.getClassNameById(characterSummary.data.character.class) + "```",
+                    inline: true
+                }, {
+                    name: `Power Score`,
+                    value: "```" + Number(characterSummary.data.character.powerScore).toLocaleString() + "```",
+                    inline: true
+                }, {
+                    name: `Mirage Score`,
+                    value: "```" + nft.MirageScore.toLocaleString() + "```",
+                    inline: true
+                }, {
+                    name: `Price`,
+                    value: "```" + characterSummary.data.price.toLocaleString() + " " + characterSummary.data.blockChain + "```",
+                    inline: true
+                })
 
-        const embed: EmbedBuilder = new EmbedBuilder()
-            .setTitle(`[${mode}] NFT List is updated`)
-            .setDescription(`**From your story, to our legacyFrom your story, to our legacy**. Character NFT is an innovation that takes game asset ownership to the next level by tokenizing your unique character, storing unique character data on the WEMIX blockchain.`)
-            .setColor(Colors.Green)
-            .setURL(`${process.env.MIR4_CHARACTER_NFT_PROFILE_URL}${nft.seq}`)
-            // .setThumbnail("https://file.mir4global.com/xdraco/img/desktop/subnav/logo-nft.webp")
-            .setImage('attachment://profile-image.png')
-            .setFooter({
-                text: `# ${nft.seq}`,
-                iconURL: "https://coinalpha.app/images/coin/1_20211022025215.png",
+            const menuRow: ActionRowBuilder<MessageActionRowComponentBuilder> = new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                .addComponents(new ButtonBuilder()
+                    .setLabel("Show More")
+                    .setStyle(ButtonStyle.Link)
+                    .setURL(`${process.env.MIR4_CHARACTER_NFT_PROFILE_URL}${nft.seq}`)
+                )
+
+            channel.send({
+                embeds: [
+                    embed
+                ],
+                files: [
+                    new AttachmentBuilder(canvas.toBuffer('image/png'), { name: 'profile-image.png' })
+                ],
+                components: [
+                    menuRow
+                ]
             })
-            .addFields({
-                name: `Name`,
-                value: "```" + nft.characterName + "```",
-                inline: true
-            }, {
-                name: `Level`,
-                value: "```" + nft.lv + "```",
-                inline: true
-            }, {
-                name: `Class`,
-                value: "```" + HNFTData.getClassNameById(nft.class) + "```",
-                inline: true
-            }, {
-                name: `Power Score`,
-                value: "```" + nft.powerScore + "```",
-                inline: true
-            }, {
-                name: `Mirage Score`,
-                value: "```" + nft.MirageScore + "```",
-                inline: true
-            }, {
-                name: `Price`,
-                value: "```" + nft.price + "```",
-                inline: true
-            })
-
-        channel.send({
-            embeds: [
-                embed
-            ],
-            files: [
-                new AttachmentBuilder(canvas.toBuffer('image/png'), { name: 'profile-image.png' })
-            ]
-        })
-        CLogger.error(`[${import.meta.url}] END`);
+        } catch (error) {
+            CLogger.error(`[${import.meta.url}] API Error > Unable to send embed: (${error})`);
+        }
     }
 
 }
