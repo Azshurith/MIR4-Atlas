@@ -25,7 +25,7 @@ export interface SteamPostResponse {
     feedname: string;
     feed_type: number;
     appid: number;
-  }
+}
 
 export enum Feedname {
     SteamCommunityAnnouncements = "steam_community_announcements",

@@ -77,7 +77,7 @@ export default class HTextChat {
                         components: [],
                         embeds: [],
                         allowedMentions: { parse: [] },
-                    },
+                    }
                 });
             }
 
