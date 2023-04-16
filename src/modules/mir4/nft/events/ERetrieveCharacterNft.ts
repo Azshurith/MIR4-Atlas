@@ -23,27 +23,27 @@ export abstract class ERetrieveCharacterNft implements IOnReadyCron {
      */
     @On({ event: "ready" })
     onReady([member]: ArgsOf<"ready">, client: Client): void {
-        setInterval(async function () {
-            try {
-                CLogger.info(`[${import.meta.url}] Start > Retrieving Character NFT`,);
-                await new CRetrieveCharacterNft(client).fetch({
-                    listType: 'sale',
-                    class: 0,
-                    levMin: 0,
-                    levMax: 0,
-                    powerMin: 0,
-                    powerMax: 0,
-                    priceMin: 0,
-                    priceMax: 0,
-                    sort: 'latest',
-                    page: 1,
-                    languageCode: 'en'
-                });
-                CLogger.info(`[${import.meta.url}] End > Retrieving Character NFT`);
-            } catch (error) {
-                CLogger.error(`[${import.meta.url}] Exception > Retrieving Character NFT`);
-            };
-        }, 1000 * 60);
+        // setInterval(async function () {
+        //     try {
+        //         CLogger.info(`[${import.meta.url}] Start > Retrieving Character NFT`,);
+        //         await new CRetrieveCharacterNft(client).fetch({
+        //             listType: 'sale',
+        //             class: 0,
+        //             levMin: 0,
+        //             levMax: 0,
+        //             powerMin: 0,
+        //             powerMax: 0,
+        //             priceMin: 0,
+        //             priceMax: 0,
+        //             sort: 'latest',
+        //             page: 1,
+        //             languageCode: 'en'
+        //         });
+        //         CLogger.info(`[${import.meta.url}] End > Retrieving Character NFT`);
+        //     } catch (error) {
+        //         CLogger.error(`[${import.meta.url}] Exception > Retrieving Character NFT`);
+        //     };
+        // }, 1000 * 60);
     }
 
 }

@@ -12,6 +12,8 @@ import CLogger from "../interface/utilities/logger/controllers/CLogger.js";
  */
 export default class HTextChat {
 
+    static MAX_DESCRIPTION_LENGTH: number = 2048;
+
     /**
      * Returns the text channel with the given name on the specified server.
      * 
@@ -34,8 +36,8 @@ export default class HTextChat {
                 return null;
             }
 
-            if (channel.type !== ChannelType.GuildText) {
-                CLogger.error(`[${import.meta.url}] Request Error > Channel is not text-based: (${channelName})`);
+            if (!channel.isTextBased()) {
+                CLogger.error(`[${import.meta.url}] Request Error > Channel is not a text based channel: (${channelName})`);
                 return null;
             }
 
@@ -95,6 +97,49 @@ export default class HTextChat {
             CLogger.error(`[${import.meta.url}] Request Error > Server Error: (${error})`);
             return null;
         }
+    }
+
+    /**
+     * Converts BBCode to Discord-compatible text.
+     * 
+     * @param {string} text The text to convert.
+     * @returns {string} The converted text.
+     */
+    static bbCodeToDiscord(text: string): string {
+        try {
+            text = text.replace(/\[b\](.*?)\[\/b\]/gs, "**$1**");
+            text = text.replace(/\[i\](.*?)\[\/i\]/gs, "*$1*");
+            text = text.replace(/\[u\](.*?)\[\/u\]/gs, "__$1__");
+            text = text.replace(/\[url\](.*?)\[\/url\]/gs, "<$1>");
+            text = text.replace(/\[img\](.*?)\[\/img\]/gs, (url) => "");
+            text = text.replace(/\[h2\](.*?)\[\/h2\]/gs, "**$1**\n");
+            text = text.replace(/\[h3\](.*?)\[\/h3\]/gs, "**$1**\n");
+            text = text.replace(/\[\/?table\]/gs, "");
+            text = text.replace(/\[\/?tr\]/gs, "");
+            text = text.replace(/\[\/?th\]/gs, "");
+            text = text.replace(/\[\/?td\]/gs, "");
+            text = text.replace(/\[\/?strike\]/gs, "");
+
+            if (text.length > this.MAX_DESCRIPTION_LENGTH) {
+                text = text.substring(0, this.MAX_DESCRIPTION_LENGTH - 3) + "...";
+            }
+        } catch (error) {
+            CLogger.error(
+                `[${import.meta.url}] Request Error > BBCode to Discord: (${error})`
+            );
+        }
+
+        return text;
+    }
+
+    /**
+     * Returns a string representation of a Discord role mention.
+     * 
+     * @param {string} roleId The ID of the role to mention.
+     * @returns {string} The string representation of the role mention.
+     */
+    static tagRole(roleId: string): string {
+        return `<@&${roleId}>`;
     }
 
 }

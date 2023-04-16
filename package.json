@@ -38,6 +38,7 @@
     "discordx": "^11.7.4",
     "dotenv": "^16.0.3",
     "query-string": "^8.1.0",
+    "steamapi": "^2.2.0",
     "winston": "^3.8.2"
   },
   "overrides": {
@@ -47,6 +48,7 @@
     "@types/fs-extra": "^11.0.1",
     "@types/lodash": "^4.14.192",
     "@types/node": "^18.13.0",
+    "@types/steamapi": "^2.2.2",
     "nodemon": "^2.0.20",
     "prettier": "^2.8.4",
     "ts-node": "^10.9.1",
