@@ -185,6 +185,7 @@ export default class CRetrieveCharacterNft implements APIController {
                 .setDescription(`**From your story, to our legacy.**\n ${characterSummary.data.character.name} is a Level ${characterSummary.data.character.level} ${HNFTData.getClassNameById(characterSummary.data.character.class)} from the ${characterSummary.data.character.worldName} Server.`)
                 .setColor(transactionType[1])
                 .setImage('attachment://profile-image.png')
+                .setURL(`${process.env.MIR4_CHARACTER_NFT_PROFILE_URL}${nft.seq}`)
                 .setFooter({
                     text: `Sealed On: ${new Date(characterSummary.data.sealedTS * 1000)}`,
                     iconURL: "https://coinalpha.app/images/coin/1_20211022025215.png",
@@ -215,13 +216,6 @@ export default class CRetrieveCharacterNft implements APIController {
                     inline: true
                 })
 
-            const menuRow: ActionRowBuilder<MessageActionRowComponentBuilder> = new ActionRowBuilder<MessageActionRowComponentBuilder>()
-                .addComponents(new ButtonBuilder()
-                    .setLabel("Show More")
-                    .setStyle(ButtonStyle.Link)
-                    .setURL(`${process.env.MIR4_CHARACTER_NFT_PROFILE_URL}${nft.seq}`)
-                )
-
             thread.send({
                 content: HTextChat.tagRole(process.env.SERVER_NFT_ROLE_ID!),
                 embeds: [
@@ -229,9 +223,6 @@ export default class CRetrieveCharacterNft implements APIController {
                 ],
                 files: [
                     new AttachmentBuilder(canvas.toBuffer('image/png'), { name: 'profile-image.png' })
-                ],
-                components: [
-                    menuRow
                 ]
             })
         } catch (error) {
