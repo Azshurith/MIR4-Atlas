@@ -23,7 +23,7 @@
   </p>
 </div>
 
-## 📖 MIR4 Atlas
+## 📖 MIR4 Domination
 
 > **Note:** This repository is just a clone of DiscordX's templates. If you want to build an application using DiscordX, visit the main [DiscordX Site](https://discordx.js.org).
 
@@ -84,4 +84,4 @@ For the full command list please view the [Docker Documentation](https://docs.do
 
 ## 📜 License
 
-MIR4 Atlas is an open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIR4 Domination is an open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
