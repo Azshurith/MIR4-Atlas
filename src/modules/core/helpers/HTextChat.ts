@@ -58,20 +58,9 @@ export default class HTextChat {
      */
     static async getSpecificServerForumThreadByName(client: Client, serverName: string, forumName: string, threadName: string, content: string): Promise<ThreadChannel | null | undefined> {
         try {
-            const guild: Guild | undefined = client.guilds.cache.find((guild) => guild.name === serverName);
-            if (!guild) {
-                CLogger.error(`[${import.meta.url}] Request Error > Server not found: (${serverName})`);
-                return null;
-            }
-
-            const channel: ForumChannel = guild.channels.cache.find((channel) => channel.name === forumName) as ForumChannel;
+            const channel: ForumChannel = this.getSpecificServerForumByName(client, serverName, forumName) as ForumChannel
             if (!channel) {
                 CLogger.error(`[${import.meta.url}] Request Error > Forum not found: (${forumName})`);
-                return null;
-            }
-
-            if (channel.type !== ChannelType.GuildForum) {
-                CLogger.error(`[${import.meta.url}] Request Error > Channel is not a forum: (${forumName})`);
                 return null;
             }
 
@@ -93,6 +82,41 @@ export default class HTextChat {
             }
 
             return thread;
+        } catch (error) {
+            CLogger.error(`[${import.meta.url}] Request Error > Server Error: (${error})`);
+            return null;
+        }
+    }
+
+    /**
+     * Get the forum channel in a specific server by name
+     *
+     * @param {Client} client - The Discord.js client
+     * @param {string} serverName - The name of the server where the forum exists
+     * @param {string} forumName - The name of the forum channel to retrieve
+     * @param {string} content - The content of the thread to create (if the thread doesn't already exist)
+     * @returns {ForumChannel | null | undefined} The forum channel or null/undefined if not found or an error occurred
+     */
+    static getSpecificServerForumByName(client: Client, serverName: string, forumName: string): ForumChannel | null | undefined {
+        try {
+            const guild: Guild | undefined = client.guilds.cache.find((guild) => guild.name === serverName);
+            if (!guild) {
+                CLogger.error(`[${import.meta.url}] Request Error > Server not found: (${serverName})`);
+                return null;
+            }
+
+            const channel: ForumChannel = guild.channels.cache.find((channel) => channel.name === forumName) as ForumChannel;
+            if (!channel) {
+                CLogger.error(`[${import.meta.url}] Request Error > Forum not found: (${forumName})`);
+                return null;
+            }
+
+            if (channel.type !== ChannelType.GuildForum) {
+                CLogger.error(`[${import.meta.url}] Request Error > Channel is not a forum: (${forumName})`);
+                return null;
+            }
+
+            return channel;
         } catch (error) {
             CLogger.error(`[${import.meta.url}] Request Error > Server Error: (${error})`);
             return null;

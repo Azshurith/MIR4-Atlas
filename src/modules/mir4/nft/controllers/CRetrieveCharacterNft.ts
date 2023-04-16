@@ -223,7 +223,7 @@ export default class CRetrieveCharacterNft implements APIController {
                 )
 
             thread.send({
-                content: HTextChat.tagRole(process.env.SERVER_NFT_ROLE_ID!)
+                content: HTextChat.tagRole(process.env.SERVER_NFT_ROLE_ID!),
                 embeds: [
                     embed
                 ],
