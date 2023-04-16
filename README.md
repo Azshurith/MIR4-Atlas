@@ -1,7 +1,7 @@
 <div>
   <p align="center">
     <a href="https://github.com/Invoke-Hub/Invoker" target="_blank" rel="nofollow">
-      <img src="https://github.com/Invoke-Hub/Invoker/blob/main/src/modules/core/resources/images/DominationLogo.png?raw=true" width="546" />
+      <img src="https://github.com/Azshurith/MIR4-Atlas/blob/main/src/modules/core/resources/images/DominationLogo.png?raw=true" width="900" />
     </a>
   </p>
   <div align="center" class="badge-container">
