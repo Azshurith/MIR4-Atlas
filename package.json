@@ -31,7 +31,6 @@
   "homepage": "https://github.com/Azshurith/MIR4-Atlas/#readme",
   "dependencies": {
     "@discordx/importer": "^1.2.1",
-    "@discordx/plugin-ytdl-player": "^1.2.4",
     "axios": "^1.3.5",
     "canvas": "^2.11.2",
     "coingecko-api-v3": "^0.0.23",
