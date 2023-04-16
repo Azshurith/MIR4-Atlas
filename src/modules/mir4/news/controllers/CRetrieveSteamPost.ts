@@ -117,22 +117,25 @@ export default class CRetrieveSteamPost implements APIController {
                 CLogger.error(`[${import.meta.url}] Channel does not exist.`);
                 return;
             }
-
+            const date: Date = new Date(news.date * 1000);
             const embed: EmbedBuilder = new EmbedBuilder()
                 .setTitle(news.title)
                 .setURL(news.url)
                 .setColor(Colors.Aqua)
                 .setFooter({
-                    text: `${new Date(news.date * 1000)}`,
+                    text: `${date}`,
                     iconURL: "https://coinalpha.app/images/coin/1_20211022025215.png",
                 })
 
             const regex: RegExp = /\[img\](.*?)\[\/img\]/;
             const match: RegExpExecArray | null = regex.exec(news.contents);
+            let image: string = "";
             if (match) {
-                embed.setImage(match[1].replace(/\{STEAM_CLAN_IMAGE\}/g, process.env.SERVER_NEWS_CDN_URL!))
+                image = match[1].replace(/\{STEAM_CLAN_IMAGE\}/g, process.env.SERVER_NEWS_CDN_URL!)
+                embed.setImage(image)
             }
 
+            news.contents = HTextChat.bbCodeToDiscord(news.contents)
             embed.setDescription(HTextChat.bbCodeToDiscord(news.contents))
 
             const menuRow: ActionRowBuilder<MessageActionRowComponentBuilder> = new ActionRowBuilder<MessageActionRowComponentBuilder>()
@@ -150,6 +153,19 @@ export default class CRetrieveSteamPost implements APIController {
                 components: [
                     menuRow
                 ]
+            })
+
+            channel.guild.scheduledEvents.create({
+                name: news.title,
+                scheduledStartTime: new Date(),
+                scheduledEndTime: new Date(date.getFullYear(), date.getMonth() + 1, 0),
+                privacyLevel: 2,
+                entityType: 3,
+                entityMetadata: {
+                    location: "MIR4"
+                },
+                description: news.contents,
+                image: image
             })
         } catch (error) {
             CLogger.error(`[${import.meta.url}] API Error > Unable to send embed: (${error})`);
