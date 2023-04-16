@@ -2,7 +2,7 @@
 import { Client } from "discordx";
 import { APIController } from "../../../core/interface/controllers/APIController";
 import { SteamPostRequest, SteamPostResponse } from "../interface/IRetrieveSteamPost";
-import { ActionRow, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, Colors, EmbedBuilder, MessageActionRowComponentBuilder, TextChannel } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Colors, EmbedBuilder, MessageActionRowComponentBuilder, TextChannel } from "discord.js";
 import CLogger from "../../../core/interface/utilities/logger/controllers/CLogger.js";
 import HTextChat from "../../../core/helpers/HTextChat.js";
 import SteamAPI from "steamapi";

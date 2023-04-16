@@ -153,7 +153,7 @@ export default class CRetrieveCharacterNft implements APIController {
     async notify(nft: List, request: NFTListRequest): Promise<void> {
         try {
             const envValidation: string[] = [
-                "SERVER_NAME", "SERVER_NFT_FORUM_NAME", "SERVER_NFT_FORUM_THREAD_NAME", "SERVER_NFT_FORUM_THREAD_CONTENT"
+                "SERVER_NAME", "SERVER_NFT_FORUM_NAME", "SERVER_NFT_FORUM_THREAD_NAME", "SERVER_NFT_FORUM_THREAD_CONTENT", "SERVER_NFT_ROLE_ID"
             ]
 
             envValidation.forEach((env: string) => {
@@ -223,6 +223,7 @@ export default class CRetrieveCharacterNft implements APIController {
                 )
 
             thread.send({
+                content: HTextChat.tagRole(process.env.SERVER_NFT_ROLE_ID!)
                 embeds: [
                     embed
                 ],
