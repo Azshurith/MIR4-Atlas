@@ -13,6 +13,33 @@ import CLogger from "../interface/utilities/logger/controllers/CLogger.js";
 export default class HTextChat {
 
     /**
+     * Returns the text channel with the given ID on the specified server.
+     * 
+     * @param {Guild} guild - The server to search for the channel on.
+     * @param {string} channelId - The ID of the channel to search for.
+     * @returns {?TextChannel} - The text channel with the given ID, or null/undefined if not found.
+     */
+    static getSpecificGuildTextChannelById(guild: Guild, channelId: string): TextChannel | null | undefined {
+        try {
+
+            const channel: TextChannel = guild.channels.cache.find((channel) => channel.id === channelId) as TextChannel;
+            if (!channel) {
+                CLogger.error(`[${import.meta.url}] Request Error > Channel not found: (${channelId})`);
+                return null;
+            }
+
+            if (!channel.isTextBased()) {
+                CLogger.error(`[${import.meta.url}] Request Error > Channel is not a text based channel: (${channelId})`);
+                return null;
+            }
+
+            return channel;
+        } catch (error) {
+            CLogger.error(`[${import.meta.url}] Request Error > Server Error: (${error})`);
+        }
+    }
+
+    /**
      * Returns the text channel with the given name on the specified server.
      * 
      * @param {Client} client - The Discord client instance to use.
