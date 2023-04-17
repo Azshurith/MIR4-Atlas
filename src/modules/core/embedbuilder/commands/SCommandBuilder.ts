@@ -91,24 +91,28 @@ export abstract class SCommandBuilder {
                 .setLabel("Title")
                 .setStyle(TextInputStyle.Short)
                 .setPlaceholder("The title of the embed")
+                .setRequired(false)
 
             const embedImage: TextInputBuilder = new TextInputBuilder()
                 .setCustomId("embedImage")
                 .setLabel("Image URL")
                 .setStyle(TextInputStyle.Short)
                 .setPlaceholder("The image of the embed")
+                .setRequired(false)
 
             const embedColor: TextInputBuilder = new TextInputBuilder()
                 .setCustomId("embedColor")
                 .setLabel("Color")
                 .setStyle(TextInputStyle.Short)
                 .setPlaceholder("The color of the embed")
+                .setRequired(false)
 
             const embedContent = new TextInputBuilder()
                 .setCustomId("embedContent")
                 .setLabel("Content")
                 .setStyle(TextInputStyle.Paragraph)
                 .setPlaceholder("The content of the embed")
+                .setRequired(false)
 
             const row1 = new ActionRowBuilder<TextInputBuilder>()
                 .addComponents(embedChannel);
@@ -146,9 +150,9 @@ export abstract class SCommandBuilder {
                 interaction.fields.getTextInputValue(id)
             );
 
-            if (!this.colors[embedColor]) {
-                await interaction.reply(`The color ${embedColor} does not exist.`);
-                return;
+            let color:number = this.colors.Default 
+            if (embedColor && this.colors[embedColor]) {
+                color = this.colors[embedColor];
             }
 
             if (!interaction.guild) {
@@ -157,14 +161,11 @@ export abstract class SCommandBuilder {
             }
 
             const embed: EmbedBuilder = new EmbedBuilder()
-                .setTitle(embedTitle)
-                .setColor(this.colors[embedColor])
-                .setDescription(embedContent)
-                .setImage(embedImage)
-                .setFooter({
-                    text: `${new Date()}`,
-                    iconURL: "https://coinalpha.app/images/coin/1_20211022025215.png",
-                })
+                .setColor(color)
+
+            if (embedTitle) embed.setTitle(embedTitle)
+            if (embedContent) embed.setDescription(embedContent)
+            if (embedImage) embed.setImage(embedImage)
 
             const channel: TextChannel = HTextChat.getSpecificGuildTextChannelById(interaction.guild, embedChannel) as TextChannel
             channel.send({
@@ -175,8 +176,8 @@ export abstract class SCommandBuilder {
 
             const embedReply: EmbedBuilder = new EmbedBuilder()
                 .setTitle("Embed Generated!")
-                .setColor(this.colors[embedColor])
-                .setDescription(`Your embed **${embedTitle}** is now posted in ${channel}`)
+                .setColor(color)
+                .setDescription(`Your embed is now posted in ${channel}`)
                 .setFooter({
                     text: `${new Date()}`,
                     iconURL: "https://coinalpha.app/images/coin/1_20211022025215.png",
