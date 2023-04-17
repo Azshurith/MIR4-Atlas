@@ -135,8 +135,8 @@ export default class CRetrieveSteamPost implements APIController {
                 embed.setImage(image)
             }
 
-            news.contents = HTextChat.bbCodeToDiscord(news.contents)
-            embed.setDescription(HTextChat.bbCodeToDiscord(news.contents))
+            news.contents = HTextChat.limit(HTextChat.bbCodeToDiscord(news.contents), 2048);
+            embed.setDescription(news.contents)
 
             const menuRow: ActionRowBuilder<MessageActionRowComponentBuilder> = new ActionRowBuilder<MessageActionRowComponentBuilder>()
                 .addComponents(new ButtonBuilder()
@@ -164,7 +164,7 @@ export default class CRetrieveSteamPost implements APIController {
                 entityMetadata: {
                     location: "MIR4"
                 },
-                description: news.contents,
+                description:  HTextChat.limit(news.contents, 1000),
                 image: image
             })
         } catch (error) {

@@ -12,8 +12,6 @@ import CLogger from "../interface/utilities/logger/controllers/CLogger.js";
  */
 export default class HTextChat {
 
-    static MAX_DESCRIPTION_LENGTH: number = 2048;
-
     /**
      * Returns the text channel with the given name on the specified server.
      * 
@@ -143,16 +141,26 @@ export default class HTextChat {
             text = text.replace(/\[\/?th\]/gs, "");
             text = text.replace(/\[\/?td\]/gs, "");
             text = text.replace(/\[\/?strike\]/gs, "");
-
-            if (text.length > this.MAX_DESCRIPTION_LENGTH) {
-                text = text.substring(0, this.MAX_DESCRIPTION_LENGTH - 3) + "...";
-            }
         } catch (error) {
             CLogger.error(
                 `[${import.meta.url}] Request Error > BBCode to Discord: (${error})`
             );
         }
 
+        return text;
+    }
+
+    /**
+     * Limits the length of a given string to a specified maximum, and adds an ellipsis if the string is truncated.
+     * 
+     * @param {string} text - The input string to be limited.
+     * @param {number} max - The maximum length of the output string, before an ellipsis is added.
+     * @returns {string} The input string limited to max characters, with an ellipsis added if the input string was truncated.
+     */
+    static limit(text: string, max: number): string {
+        if (text.length > max) {
+            text = text.substring(0, max - 3) + "...";
+        }
         return text;
     }
 
