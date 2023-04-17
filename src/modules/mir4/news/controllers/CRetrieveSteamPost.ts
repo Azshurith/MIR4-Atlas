@@ -155,9 +155,10 @@ export default class CRetrieveSteamPost implements APIController {
                 ]
             })
 
+            const now:Date = new Date();
             channel.guild.scheduledEvents.create({
                 name: news.title,
-                scheduledStartTime: new Date(),
+                scheduledStartTime: now.setMinutes( now.getMinutes() + 5),
                 scheduledEndTime: new Date(date.getFullYear(), date.getMonth() + 1, 0),
                 privacyLevel: 2,
                 entityType: 3,
