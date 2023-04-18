@@ -50,6 +50,11 @@ export default class CRetrieveCharacterNft implements APIController {
 
             const listUrl: string = `${process.env.MIR4_CHARACTER_NFT_URL}?${queryString.stringify(request)}`;
             const listResponse: AxiosResponse<NFTListResponse, any> = await axios.get<NFTListResponse>(listUrl);
+
+            if (!listResponse.data.data.totalCount) {
+                CLogger.error(`[${import.meta.url}] Server is currently in maintenance.`);
+                return;
+            }
             const totalPages: number = Math.ceil(listResponse.data.data.totalCount / 20);
 
             const filePath: string = `${process.cwd()}/src/modules/mir4/nft/resources/data/users/nfts-${request.languageCode}.json`;
