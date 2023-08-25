@@ -8,14 +8,14 @@
     <a href="https://discord.gg/y5jkd2KgAS">
         <img src="https://img.shields.io/discord/1092811968705990769?color=5865F2&logo=discord&logoColor=white" alt="Discord server"/>
     </a>
-    <a href="https://github.com/Azshurith/MIR4-Atlas/issues">
-        <img src="https://img.shields.io/github/issues/Azshurith/MIR4-Atlas" alt="Issues">
+    <a href="https://github.com/Azshurith/MIR4-Domination/issues">
+        <img src="https://img.shields.io/github/issues/Azshurith/MIR4-Domination" alt="Issues">
     </a>
-    <a href="https://github.com/Azshurith/MIR4-Atlas/stargazers">
-        <img src="https://img.shields.io/github/stars/Azshurith/MIR4-Atlas" alt="Stars">
+    <a href="https://github.com/Azshurith/MIR4-Domination/stargazers">
+        <img src="https://img.shields.io/github/stars/Azshurith/MIR4-Domination" alt="Stars">
     </a>
-    <a href="https://github.com/Azshurith/MIR4-Atlas/blob/main/LICENSE">
-        <img src="https://img.shields.io/github/license/Azshurith/MIR4-Atlas" alt="License">
+    <a href="https://github.com/Azshurith/MIR4-Domination/blob/main/LICENSE">
+        <img src="https://img.shields.io/github/license/Azshurith/MIR4-Domination" alt="License">
     </a>
   </div>
   <p align="center">
